@@ -1,7 +1,9 @@
 from django.core import urlresolvers
 from django.conf.urls.defaults import url
 from django.db.models.loading import get_model
+from django.db.models import fields
 from django.shortcuts import get_object_or_404
+from django.db.models.sql.constants import LOOKUP_SEP, QUERY_TERMS
 
 import functools, re
 
@@ -12,43 +14,52 @@ def mapping_int(value):
     return int(value)
     # This might raise an exception in unusual cases, ideally the framework will ensure the regex catches invalid data
 
+TYPE_MAP = {
+    fields.AutoField: (r'(?P<%s>\d+)', mapping_int),
+    fields.CharField: (r'(?P<%s>[^/]*)', mapping_str),
+}
+
 def query_type(model, query):
-    # TODO: find right mapping from query
-    return mapping_str
+    parts = query.split(LOOKUP_SEP)
+    # Normalize query operator:
+    if parts[-1] not in QUERY_TERMS:
+        parts.append('exact')
+    # Lookup field    
+    opts = model._meta
+    for name in parts[:-2]:
+        model = opts.get_field_by_name(name)[0].rel.to
+        opts = model._meta
+    name = parts[-2]
+    if name == 'pk':
+        name = opts.pk.name
+    field, model, _, _ = opts.get_field_by_name(name)
+    return TYPE_MAP[type(field)]
 
 def object_mapper(model, query):
     # find mapping for query
-    mapping = query_type(model, query)
-    return lambda value: get_object_or_404(model, **{query: mapping(value)})
+    regex, mapping = query_type(model, query)
+    return regex, lambda value: get_object_or_404(model, **{query: mapping(value)})
 
 def queryset_mapper(model, query):
     # find mapping for query
-    mapping = query_type(model, query)
-    return lambda value: model._default_manager.filter(**{query: mapping(value)})
+    regex, mapping = query_type(model, query)
+    return regex, lambda value: model._default_manager.filter(**{query: mapping(value)})
 
 def parse_object(item):
     name, value = item.split('=', 1)
-    regex = r'(?P<%s>[^/]*)'
     app, model, query = value.split('.')
     model_class = get_model(app, model)
     if name[0]=='<' and name[-1]=='>': # Single object mapping
         name = name[1:-1]
-        mapping = object_mapper(model_class, query)
+        regex, mapping = object_mapper(model_class, query)
     elif name[0]=='[' and name[-1]==']':# Queryset mapping
         name = name[1:-1]
-        mapping = queryset_mapper(model_class, query)
+        regex, mapping = queryset_mapper(model_class, query)
     else: # Value mapping
-        mapping = query_type(model_class, query)
+        regex, mapping = query_type(model_class, query)
     assert name.replace('_', '').isalnum() # FIXME: check more cleanly here
     # lookup
     return regex, name, mapping
-
-def parse_value(item):
-    name, value = item.split(':', 1)
-    assert name.replace('_', '').isalnum() # FIXME: check more cleanly here
-    regex = r'(?P<%s>[^/]*)'
-    mapping = mapping_str # lookup the right mapping function
-    return regex, name, mapping    
 
 class NewURLPattern(urlresolvers.RegexURLPattern):
     def __init__(self, path, callback, default_args=None, name=None):
