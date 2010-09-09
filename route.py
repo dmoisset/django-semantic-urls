@@ -15,6 +15,7 @@ def object_mapper(model, query):
     from mysite.polls.models import Poll as model_class # FIXME: find right class
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping from query
+    # FIXME: probably we want get_object_or_404 here
     return lambda value: model_class._default_manager.get(**{query: mapping(value)})
 
 def queryset_mapper(model, query):
@@ -33,7 +34,7 @@ def parse_object(item):
         mapping = object_mapper(model, query)
     elif value[0]=='[' and value[-1]==']':# Queryset mapping
         model, query = value[1:-1].split('.')
-        mapping = queryset_mapper(mapping_str)
+        mapping = queryset_mapper(model, query)
     else:
         assert False # FIXME: RAISE EXCEPTION HERE
     # lookup
