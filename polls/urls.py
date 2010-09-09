@@ -1,12 +1,12 @@
 from django.conf.urls.defaults import *
-from route import view
+from route import url 
 
 urlpatterns = patterns('mysite.polls.views',
-    view('', 'index'),
-    view('<poll>=polls.Poll.pk/', 'detail'),
-    view('<poll>=polls.Poll.pk/results/', 'results'),
-    view('<poll>=polls.Poll.pk/vote/', 'vote'),
-    view('search/[search_results]=polls.Poll.question__icontains/', 'search'),
-    view('usearch/[search_results]=auth.USER.username__icontains/', 'usearch'),
+    url('', 'index'),
+    url('<poll>=polls.Poll.pk/', 'detail'),
+    url('<poll>=polls.Poll.pk/results/', 'results'),
+    url('<poll>=polls.Poll.pk/vote/', 'vote'),
+    url('search/[search_results]=polls.Poll.question__icontains/', 'search'),
+    url('usearch/[search_results]=auth.USER.username__icontains/', 'usearch'),
 )
 
