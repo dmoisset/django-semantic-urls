@@ -27,16 +27,18 @@ def queryset_mapper(model, query):
 
 def parse_object(item):
     name, value = item.split('=', 1)
-    assert name.replace('_', '').isalnum() # FIXME: check more cleanly here
     regex = r'(?P<%s>[^/]*)'
-    if value[0]=='<' and value[-1]=='>': # Single object mapping
-        model, query = value[1:-1].split('.')
+    if name[0]=='<' and name[-1]=='>': # Single object mapping
+        name = name[1:-1]
+        model, query = value.split('.')
         mapping = object_mapper(model, query)
-    elif value[0]=='[' and value[-1]==']':# Queryset mapping
-        model, query = value[1:-1].split('.')
+    elif name[0]=='[' and name[-1]==']':# Queryset mapping
+        name = name[1:-1]
+        model, query = value.split('.')
         mapping = queryset_mapper(model, query)
-    else:
-        assert False # FIXME: RAISE EXCEPTION HERE
+    else: # Value mapping
+        mapping = mapping_str
+    assert name.replace('_', '').isalnum() # FIXME: check more cleanly here
     # lookup
     return regex, name, mapping
 
@@ -56,10 +58,6 @@ class NewURLPattern(urlresolvers.RegexURLPattern):
         for item in path.split('/'):
             if '=' in item:
                 item_regex, name, item_mapping = parse_object(item)
-                regex.append(item_regex % name)
-                self.mapping[name] = item_mapping
-            elif ':' in item:
-                item_regex, name, item_mapping = parse_value(item)
                 regex.append(item_regex % name)
                 self.mapping[name] = item_mapping
             else: 
