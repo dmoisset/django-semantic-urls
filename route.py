@@ -12,14 +12,14 @@ def mapping_int(value):
 
 def object_mapper(model, query):
     # get model by name
-    from mysite.models import Poll as model_class # FIXME: find right class
+    from mysite.polls.models import Poll as model_class # FIXME: find right class
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping from query
     return lambda value: model_class._default_manager.get(**{query: mapping(value)})
 
 def queryset_mapper(model, query):
     # get model by name
-    from mysite.models import Poll as model_class # FIXME: find right class
+    from mysite.polls.models import Poll as model_class # FIXME: find right class
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping
     return lambda value: model_class._default_manager.filter(**{query: mapping(value)})
@@ -63,20 +63,20 @@ class NewURLPattern(urlresolvers.RegexURLPattern):
                 self.mapping[name] = item_mapping
             else: 
                 regex.append(re.escape(item))
-        regex = '/'.join(regex)
-
+        regex = '^'+'/'.join(regex)+'$'
         super(NewURLPattern, self).__init__(regex, callback, default_args, name)
 
     def resolve(self, path):
-        callback, args, kwargs = super(NewURLPattern, self).resolve(path)
-        # FIXME: Yes, I'm wrapping the function each time, this is inefficient
-        # Build function
-        def inner(request, *innerargs, **innerkw):
-            print "***"
-            for name in self.mapping:
-                innerkw[name] = self.mapping[name](innerkw[name])
-            return callback(request, *innerargs, **innerkw)
-        return functools.update_wrapper(inner, callback), args, kwargs
+        match = super(NewURLPattern, self).resolve(path)
+        if match:
+            callback, args, kwargs = match
+            # FIXME: Yes, I'm wrapping the function each time, this is inefficient
+            # Build function
+            def inner(request, *innerargs, **innerkw):
+                for name in self.mapping:
+                    innerkw[name] = self.mapping[name](innerkw[name])
+                return callback(request, *innerargs, **innerkw)
+            return functools.update_wrapper(inner, callback), args, kwargs
 
 def view(path, viewname, kwargs=None, name=None):
     # FIXME: handle include URLs
