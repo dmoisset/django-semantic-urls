@@ -1,5 +1,6 @@
 from django.core import urlresolvers
 from django.conf.urls.defaults import url
+from django.db.models.loading import get_model
 
 import functools, re
 
@@ -12,7 +13,7 @@ def mapping_int(value):
 
 def object_mapper(model, query):
     # get model by name
-    from mysite.polls.models import Poll as model_class # FIXME: find right class
+    model_class = get_model('polls', model) # FIXME: use right app
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping from query
     # FIXME: probably we want get_object_or_404 here
@@ -20,7 +21,7 @@ def object_mapper(model, query):
 
 def queryset_mapper(model, query):
     # get model by name
-    from mysite.polls.models import Poll as model_class # FIXME: find right class
+    model_class = get_model('polls', model) # FIXME: use right app
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping
     return lambda value: model_class._default_manager.filter(**{query: mapping(value)})
