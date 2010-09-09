@@ -35,4 +35,7 @@ def results(request, poll):
 
 def search(request, search_results):
     return render_to_response('polls/index.html', {'latest_poll_list': search_results})
+
+def usearch(request, search_results):
+    return render_to_response('polls/user-index.html', {'users': search_results})
     

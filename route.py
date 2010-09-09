@@ -11,17 +11,17 @@ def mapping_int(value):
     return int(value)
     # This might raise an exception in unusual cases, ideally the framework will ensure the regex catches invalid data
 
-def object_mapper(model, query):
+def object_mapper(app, model, query):
     # get model by name
-    model_class = get_model('polls', model) # FIXME: use right app
+    model_class = get_model(app, model)
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping from query
     # FIXME: probably we want get_object_or_404 here
     return lambda value: model_class._default_manager.get(**{query: mapping(value)})
 
-def queryset_mapper(model, query):
+def queryset_mapper(app, model, query):
     # get model by name
-    model_class = get_model('polls', model) # FIXME: use right app
+    model_class = get_model(app, model)
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping
     return lambda value: model_class._default_manager.filter(**{query: mapping(value)})
@@ -29,14 +29,13 @@ def queryset_mapper(model, query):
 def parse_object(item):
     name, value = item.split('=', 1)
     regex = r'(?P<%s>[^/]*)'
+    app, model, query = value.split('.')
     if name[0]=='<' and name[-1]=='>': # Single object mapping
         name = name[1:-1]
-        model, query = value.split('.')
-        mapping = object_mapper(model, query)
+        mapping = object_mapper(app, model, query)
     elif name[0]=='[' and name[-1]==']':# Queryset mapping
         name = name[1:-1]
-        model, query = value.split('.')
-        mapping = queryset_mapper(model, query)
+        mapping = queryset_mapper(app, model, query)
     else: # Value mapping
         mapping = mapping_str
     assert name.replace('_', '').isalnum() # FIXME: check more cleanly here
