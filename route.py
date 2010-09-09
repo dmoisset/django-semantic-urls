@@ -17,7 +17,6 @@ def object_mapper(app, model, query):
     model_class = get_model(app, model)
     # find mapping for query
     mapping = mapping_str # FIXME: find right mapping from query
-    # FIXME: probably we want get_object_or_404 here
     return lambda value: get_object_or_404(model_class, **{query: mapping(value)})
 
 def queryset_mapper(app, model, query):
