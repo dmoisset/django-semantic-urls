@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import *
-from route import smarturl 
+from semantic_urls.route import smarturl
 
 urlpatterns = patterns('mysite.polls.views',
     smarturl('', 'index'),
