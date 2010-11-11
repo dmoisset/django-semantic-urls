@@ -89,7 +89,7 @@ class NewURLPattern(urlresolvers.RegexURLPattern):
                 return callback(request, *innerargs, **innerkw)
             return functools.update_wrapper(inner, callback), args, kwargs
 
-def url(path, viewname, kwargs=None, name=None):
+def smarturl(path, viewname, kwargs=None, name=None):
     # FIXME: handle include URLs
     return NewURLPattern(path, viewname, kwargs, name)
 

@@ -1,12 +1,12 @@
 from django.conf.urls.defaults import *
-from route import url 
+from route import smarturl 
 
 urlpatterns = patterns('mysite.polls.views',
-    url('', 'index'),
-    url('<poll>=polls.Poll.pk/', 'detail'),
-    url('<poll>=polls.Poll.pk/results/', 'results'),
-    url('<poll>=polls.Poll.pk/vote/', 'vote'),
-    url('search/[search_results]=polls.Poll.question__icontains/', 'search'),
-    url('usearch/[search_results]=auth.USER.username__icontains/', 'usearch'),
+    smarturl('', 'index'),
+    smarturl('<poll>=polls.Poll.pk/', 'detail'),
+    smarturl('<poll>=polls.Poll.pk/results/', 'results'),
+    smarturl('<poll>=polls.Poll.pk/vote/', 'vote'),
+    smarturl('search/[search_results]=polls.Poll.question__icontains/', 'search'),
+    smarturl('usearch/[search_results]=auth.USER.username__icontains/', 'usearch'),
 )
 
